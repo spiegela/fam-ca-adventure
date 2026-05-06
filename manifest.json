@@ -1,0 +1,59 @@
+{
+  "id": "/ca-trip/",
+  "name": "California Adventure — The Spiegels",
+  "short_name": "CA Trip",
+  "description": "A family road-trip companion for Humboldt County, Yosemite, Disneyland, lodging, maps, and quick-reference logistics.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "portrait",
+  "background_color": "#faf9f7",
+  "theme_color": "#1a1a2e",
+  "categories": ["travel", "navigation", "lifestyle"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Maps",
+      "short_name": "Maps",
+      "description": "Open the trip maps.",
+      "url": "./index.html#maps",
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Daily Itinerary",
+      "short_name": "Days",
+      "description": "Open the daily itinerary.",
+      "url": "./index.html#itinerary",
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Quick Reference",
+      "short_name": "Info",
+      "description": "Open confirmations, addresses, and support numbers.",
+      "url": "./index.html#ref",
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

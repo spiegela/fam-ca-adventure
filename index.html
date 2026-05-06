@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a1a2e">
+<title>California Adventure — The Spiegels</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400&display=swap');
+
+:root {
+  --humboldt: #2d6a4f;
+  --humboldt-light: #d8f3dc;
+  --yosemite: #bc6c25;
+  --yosemite-light: #fefae0;
+  --disney: #7b2cbf;
+  --disney-light: #e8d5f5;
+  --travel: #457b9d;
+  --travel-light: #d4e8f2;
+  --bg: #faf9f7;
+  --card: #ffffff;
+  --text: #1a1a2e;
+  --text-secondary: #555;
+  --text-muted: #888;
+  --border: #e8e6e1;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --gold: #d4a017;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg); color: var(--text);
+  overflow-x: hidden;
+  padding-bottom: calc(70px + var(--safe-bottom));
+  -webkit-font-smoothing: antialiased;
+}
+
+/* TAB BAR */
+.tab-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  display: flex; padding-bottom: var(--safe-bottom);
+  border-top: 1px solid var(--border); z-index: 1000;
+  height: calc(70px + var(--safe-bottom));
+}
+.tab-bar button {
+  flex: 1; border: none; background: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; font-size: 10px; font-weight: 500; color: var(--text-muted);
+  padding: 8px 4px; cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif;
+}
+.tab-bar button.active { color: var(--gold); }
+.tab-bar button .tab-icon { font-size: 24px; line-height: 1; }
+
+/* PAGES */
+.page { display: none; min-height: 100vh; }
+.page.active { display: block; }
+
+/* HERO */
+.hero {
+  position: relative;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: white; padding: 60px 24px 40px; text-align: center; overflow: hidden;
+}
+.hero::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at 30% 20%, rgba(212,160,23,0.15) 0%, transparent 50%),
+              radial-gradient(circle at 70% 80%, rgba(123,44,191,0.1) 0%, transparent 50%);
+}
+.hero-content { position: relative; z-index: 1; }
+.hero-eyebrow { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); font-weight: 600; margin-bottom: 12px; }
+.hero h1 { font-family: 'Playfair Display', serif; font-size: 38px; font-weight: 800; line-height: 1.1; margin-bottom: 6px; }
+.hero h1 span { display: block; font-style: italic; color: var(--gold); }
+.hero-subtitle { font-size: 15px; font-weight: 300; opacity: 0.8; margin-top: 10px; }
+.hero-dates {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.1); border-radius: 30px;
+  padding: 8px 18px; margin-top: 16px; font-size: 13px; font-weight: 500;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.hero-stats { display: flex; justify-content: center; gap: 24px; margin-top: 24px; }
+.hero-stat { text-align: center; }
+.hero-stat-num { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: var(--gold); }
+.hero-stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.6; margin-top: 2px; }
+
+/* REF CARDS */
+.quick-ref { padding: 20px 16px; }
+.quick-ref-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; margin-bottom: 14px; padding-left: 4px; }
+.ref-cards { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+.ref-cards::-webkit-scrollbar { display: none; }
+.ref-card { flex: 0 0 280px; scroll-snap-align: start; background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+.ref-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.ref-card-icon { font-size: 28px; }
+.ref-card-title { font-weight: 600; font-size: 14px; }
+.ref-card-subtitle { font-size: 11px; color: var(--text-muted); }
+.ref-card-detail { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+.ref-card-detail strong { color: var(--text); font-weight: 600; }
+.ref-card-conf { display: inline-block; margin-top: 8px; padding: 4px 10px; background: #f5f4f0; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+.home-day-link { width: 100%; border: none; background: none; font-family: 'Inter', sans-serif; color: inherit; text-align: left; cursor: pointer; }
+.home-day-link:active { opacity: 0.72; }
+
+/* MAP SECTION */
+.map-page { padding-top: 0; }
+.map-selector {
+  position: sticky; top: 0; z-index: 500;
+  background: rgba(255,255,255,0.95); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  padding: 12px 16px; display: flex; gap: 8px; overflow-x: auto; border-bottom: 1px solid var(--border);
+}
+.map-selector::-webkit-scrollbar { display: none; }
+.map-btn { flex-shrink: 0; border: none; border-radius: 30px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif; background: #f0eeea; color: var(--text-secondary); }
+.map-btn.active { background: var(--text); color: white; }
+.map-view { display: none; }
+.map-view.active { display: block; }
+.map-wrap { position: relative; overflow: hidden; background: #d8e4e8; }
+.trip-map { width: 100%; height: calc(100vh - 146px - var(--safe-bottom)); min-height: 430px; max-height: 720px; }
+.maplibregl-map { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+.maplibregl-ctrl-attrib { font-size: 10px; }
+.maplibregl-popup { max-width: min(300px, calc(100vw - 32px)); }
+.maplibregl-popup-content { border-radius: 12px; box-shadow: var(--shadow-lg); padding: 14px 16px 12px; border: 1px solid rgba(0,0,0,0.04); }
+.maplibregl-popup-close-button { color: var(--text-muted); font-size: 20px; padding: 6px 8px; }
+.map-popup-title { font-weight: 700; font-size: 14px; margin: 0 18px 4px 0; color: var(--text); }
+.map-popup-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+.map-marker { width: 32px; height: 32px; border-radius: 50%; border: 2px solid white; box-shadow: 0 4px 14px rgba(0,0,0,0.22); display: flex; align-items: center; justify-content: center; color: white; font-size: 15px; cursor: pointer; transform: translate(-50%, -50%); }
+.map-marker.small { width: 26px; height: 26px; font-size: 12px; }
+.map-marker.humboldt { background: var(--humboldt); }
+.map-marker.yosemite { background: var(--yosemite); }
+.map-marker.disney { background: var(--disney); }
+.map-marker.travel { background: var(--travel); }
+.map-note { position: absolute; left: 14px; right: 14px; bottom: 14px; z-index: 2; background: rgba(255,255,255,0.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255,255,255,0.72); border-radius: 12px; box-shadow: var(--shadow); padding: 12px 14px; pointer-events: none; }
+.map-note-title { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.map-note-body { font-size: 11px; color: var(--text-secondary); line-height: 1.45; }
+.map-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; color: var(--text-secondary); font-size: 13px; background: linear-gradient(135deg, #dfe9ec, #f7f5f0); }
+.map-wrap.ready .map-loading { display: none; }
+.drive-info { background: var(--card); border-radius: var(--radius); margin: 12px 16px; padding: 16px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+.drive-info h3 { font-family: 'Playfair Display', serif; font-size: 16px; margin-bottom: 8px; }
+.drive-step { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.drive-step:last-child { border: none; }
+.drive-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.drive-text { flex: 1; }
+.drive-text strong { display: block; font-weight: 600; }
+.drive-text span { color: var(--text-secondary); font-size: 12px; }
+
+/* DAY CARDS */
+.itinerary-page { padding: 0 0 20px; }
+.itin-header { background: linear-gradient(135deg, #1a1a2e, #16213e); color: white; padding: 50px 20px 24px; text-align: center; }
+.itin-header h2 { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; }
+.itin-header p { font-size: 13px; opacity: 0.7; margin-top: 4px; }
+.day-nav { position: sticky; top: 0; z-index: 500; background: rgba(255,255,255,0.95); backdrop-filter: blur(16px); display: flex; overflow-x: auto; padding: 10px 16px; gap: 6px; border-bottom: 1px solid var(--border); }
+.day-nav::-webkit-scrollbar { display: none; }
+.day-chip { flex-shrink: 0; border: none; border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; background: #f0eeea; color: var(--text-secondary); transition: all 0.2s; }
+.day-chip.active { color: white; }
+.day-chip[data-region="humboldt"].active { background: var(--humboldt); }
+.day-chip[data-region="yosemite"].active { background: var(--yosemite); }
+.day-chip[data-region="disney"].active { background: var(--disney); }
+.day-chip[data-region="travel"].active { background: var(--travel); }
+.day-section { padding: 16px; }
+.day-card { background: var(--card); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 16px; }
+.day-card-header { padding: 18px 18px 14px; cursor: pointer; display: flex; align-items: flex-start; gap: 14px; }
+.day-num { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: white; flex-shrink: 0; }
+.day-num.humboldt { background: var(--humboldt); }
+.day-num.yosemite { background: var(--yosemite); }
+.day-num.disney { background: var(--disney); }
+.day-num.travel { background: var(--travel); }
+.day-info { flex: 1; }
+.day-date { font-size: 11px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+.day-title { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; margin-top: 2px; line-height: 1.2; }
+.day-region-tag { display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; margin-top: 6px; }
+.day-region-tag.humboldt { background: var(--humboldt-light); color: var(--humboldt); }
+.day-region-tag.yosemite { background: var(--yosemite-light); color: var(--yosemite); }
+.day-region-tag.disney { background: var(--disney-light); color: var(--disney); }
+.day-region-tag.travel { background: var(--travel-light); color: var(--travel); }
+.day-chevron { font-size: 18px; color: var(--text-muted); transition: transform 0.3s; margin-top: 12px; }
+.day-card.open .day-chevron { transform: rotate(180deg); }
+.day-body { display: none; padding: 0 18px 18px; }
+.day-card.open .day-body { display: block; }
+.timeline { position: relative; padding-left: 20px; }
+.timeline::before { content: ''; position: absolute; left: 5px; top: 8px; bottom: 8px; width: 2px; background: var(--border); }
+.tl-item { position: relative; margin-bottom: 16px; }
+.tl-item:last-child { margin-bottom: 0; }
+.tl-dot { position: absolute; left: -20px; top: 6px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--border); background: white; }
+.tl-item.highlight .tl-dot { border-color: var(--gold); background: var(--gold); }
+.tl-time { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+.tl-title { font-size: 14px; font-weight: 600; margin-top: 2px; }
+.tl-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-top: 3px; }
+.tl-tag { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-top: 4px; background: #f5f4f0; color: var(--text-secondary); }
+.tip-box { background: linear-gradient(135deg, #fef9e7, #fef3c7); border-left: 3px solid var(--gold); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 12px 14px; margin-top: 14px; font-size: 12px; line-height: 1.6; color: #6b5a00; }
+.tip-box strong { color: #4a3c00; }
+.checklist { margin-top: 10px; }
+.checklist-item { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; font-size: 13px; cursor: pointer; }
+.checklist-item .check-box { width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; font-size: 12px; }
+.checklist-item.checked .check-box { background: var(--humboldt); border-color: var(--humboldt); color: white; }
+.checklist-item.checked .check-label { text-decoration: line-through; opacity: 0.5; }
+
+/* GUIDE */
+.guide-page { padding: 0 0 20px; }
+.guide-header { background: linear-gradient(135deg, #7b2cbf, #5a189a); color: white; padding: 50px 20px 24px; text-align: center; }
+.guide-header h2 { font-family: 'Playfair Display', serif; font-size: 26px; }
+.guide-header p { font-size: 13px; opacity: 0.7; margin-top: 4px; }
+.guide-section { padding: 16px; }
+.guide-card { background: var(--card); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 14px; }
+.guide-card-header { padding: 16px; cursor: pointer; display: flex; align-items: center; gap: 12px; }
+.guide-card-icon { font-size: 26px; }
+.guide-card-title { font-weight: 700; font-size: 15px; flex: 1; }
+.guide-card-chevron { font-size: 18px; color: var(--text-muted); transition: transform 0.3s; }
+.guide-card.open .guide-card-chevron { transform: rotate(180deg); }
+.guide-card-body { display: none; padding: 0 16px 16px; font-size: 13px; line-height: 1.7; color: var(--text-secondary); }
+.guide-card.open .guide-card-body { display: block; }
+.guide-card-body h4 { font-size: 14px; color: var(--text); margin: 12px 0 6px; font-weight: 700; }
+.guide-card-body h4:first-child { margin-top: 0; }
+.guide-card-body ul { padding-left: 18px; margin: 6px 0; }
+.guide-card-body li { margin-bottom: 4px; }
+.ride-list { margin: 8px 0; }
+.ride-item { display: flex; align-items: flex-start; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.ride-item:last-child { border: none; }
+.ride-star { color: var(--gold); font-size: 14px; flex-shrink: 0; }
+.ride-name { font-weight: 600; font-size: 13px; color: var(--text); }
+.ride-desc { font-size: 12px; color: var(--text-muted); }
+.restaurant-section { margin: 10px 0; }
+.restaurant-item { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.restaurant-item:last-child { border: none; }
+.restaurant-name { font-weight: 600; font-size: 13px; }
+.restaurant-price { font-size: 11px; color: var(--gold); font-weight: 600; }
+.restaurant-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+/* REF PAGE */
+.ref-page { padding: 0 0 20px; }
+.ref-header { background: linear-gradient(135deg, #1a1a2e, #0f3460); color: white; padding: 50px 20px 24px; text-align: center; }
+.ref-header h2 { font-family: 'Playfair Display', serif; font-size: 26px; }
+.ref-table { background: var(--card); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); margin: 16px; border: 1px solid var(--border); }
+.ref-row { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 12px; }
+.ref-row:last-child { border: none; }
+.ref-row.link-row { color: inherit; text-decoration: none; cursor: pointer; transition: background 0.2s; }
+.ref-row.link-row:active { background: #f7f5f0; }
+.ref-row-icon { font-size: 22px; flex-shrink: 0; }
+.ref-row-content { flex: 1; }
+.ref-row-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+.ref-row-value { font-size: 14px; font-weight: 600; margin-top: 2px; }
+.ref-row-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.ref-row-mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; background: #f5f4f0; display: inline-block; padding: 3px 8px; border-radius: 4px; margin-top: 4px; }
+.ref-section-title { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; padding: 20px 16px 8px; }
+.phone-link { color: var(--travel); text-decoration: none; font-weight: 600; }
+.ref-action { font-size: 11px; color: var(--travel); font-weight: 600; margin-top: 5px; }
+
+.day-body, .guide-card-body { animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+@media (min-width: 768px) { .hero h1 { font-size: 48px; } .day-section, .guide-section, .quick-ref { max-width: 600px; margin: 0 auto; } }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1: HOME -->
+<div id="page-home" class="page active">
+  <div class="hero"><div class="hero-content">
+    <div class="hero-eyebrow">The Spiegel Family Presents</div>
+    <h1>California<span>Adventure</span></h1>
+    <div class="hero-subtitle">Humboldt County &middot; Yosemite &middot; Disneyland</div>
+    <div class="hero-dates">&#x2708;&#xFE0F; May 7 &ndash; 16, 2026</div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="hero-stat-num">10</div><div class="hero-stat-label">Days</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">3</div><div class="hero-stat-label">Regions</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">4</div><div class="hero-stat-label">Travelers</div></div>
+    </div>
+  </div></div>
+  <div class="quick-ref"><div class="quick-ref-title">Trip at a Glance</div>
+    <div class="ref-cards">
+      <div class="ref-card"><div class="ref-card-header"><div class="ref-card-icon">&#x2708;&#xFE0F;</div><div><div class="ref-card-title">Outbound Flights</div><div class="ref-card-subtitle">Wednesday, May 7</div></div></div><div class="ref-card-detail"><strong>UA 2058</strong> MCI &rarr; DEN &middot; Boards 8:09 AM<br><strong>UA 4740</strong> DEN &rarr; ACV &middot; Boards 10:50 AM<br>Aaron (28F/15D), Jen (27F/12D)<br>Nathaniel (28E/12C), Avi (27E/15C)</div></div>
+      <div class="ref-card"><div class="ref-card-header"><div class="ref-card-icon">&#x1F697;</div><div><div class="ref-card-title">Rental Car</div><div class="ref-card-subtitle">Budget &middot; Chevy Equinox</div></div></div><div class="ref-card-detail"><strong>Pick-up:</strong> May 7, 12 PM at ACV<br><strong>Drop-off:</strong> May 16, 12 PM at LAX<br>Unlimited mileage &middot; $1,208.57<div class="ref-card-conf">#44911289US3</div></div></div>
+      <div class="ref-card"><div class="ref-card-header"><div class="ref-card-icon">&#x1F3E1;</div><div><div class="ref-card-title">Farm Stay &mdash; Bayside</div><div class="ref-card-subtitle">May 7&ndash;9 &middot; Host: Jeffrey</div></div></div><div class="ref-card-detail">1982 Old Arcata Road<br>Bayside, CA 95524<br><strong>In:</strong> after 3 PM &middot; <strong>Out:</strong> before 11 AM</div></div>
+      <div class="ref-card"><div class="ref-card-header"><div class="ref-card-icon">&#x1F3D5;&#xFE0F;</div><div><div class="ref-card-title">Cottage &mdash; Oakhurst</div><div class="ref-card-subtitle">May 9&ndash;11 &middot; Host: Robert</div></div></div><div class="ref-card-detail">50063 High School Road<br>Oakhurst, CA 93644<br><strong>In:</strong> after 5 PM &middot; <strong>Out:</strong> before 10 AM</div></div>
+      <div class="ref-card"><div class="ref-card-header"><div class="ref-card-icon">&#x1F3F0;</div><div><div class="ref-card-title">Anaheim Stay</div><div class="ref-card-subtitle">May 11&ndash;16 &middot; 5 nights</div></div></div><div class="ref-card-detail">Near Disneyland Resort<br><strong>In:</strong> May 11 &middot; <strong>Out:</strong> May 16<br>See separate confirmation</div></div>
+    </div>
+  </div>
+  <div class="quick-ref"><div class="quick-ref-title">Your 10 Days</div><div id="home-timeline"></div></div>
+</div>
+
+<!-- PAGE 2: MAPS -->
+<div id="page-maps" class="page map-page">
+  <div class="map-selector">
+    <button class="map-btn active" onclick="switchMap('overview',this)">&#x1F5FA;&#xFE0F; Full Route</button>
+    <button class="map-btn" onclick="switchMap('yosemite',this)">&#x1F3D4;&#xFE0F; Yosemite</button>
+    <button class="map-btn" onclick="switchMap('disney',this)">&#x1F3F0; Disney</button>
+  </div>
+
+  <!-- OVERVIEW MAP -->
+  <div id="mv-overview" class="map-view active">
+    <div class="map-wrap">
+      <div class="map-loading">Loading the California road map...</div>
+      <div id="map-overview" class="trip-map" aria-label="Interactive map of the full California trip route"></div>
+      <div class="map-note"><div class="map-note-title">Full route</div><div class="map-note-body">Pan, zoom, and tap markers for flight, stay, scenic stop, Disney, and LAX details.</div></div>
+    </div>
+    <div class="drive-info"><h3>&#x1F697; Driving Directions</h3>
+      <div class="drive-step"><div class="drive-icon">1&#xFE0F;&#x20E3;</div><div class="drive-text"><strong>Day 1: Airport to Bayside</strong><span>ACV Airport &rarr; 1982 Old Arcata Rd &middot; ~15 min</span></div></div>
+      <div class="drive-step"><div class="drive-icon">2&#xFE0F;&#x20E3;</div><div class="drive-text"><strong>Day 3: Bayside &rarr; Oakhurst</strong><span>Hwy 101 S &rarr; 299 E &rarr; 99 S &rarr; 41 S &middot; ~5.5 hrs (330 mi)<br>Stops: Trinity River, Oakdale</span></div></div>
+      <div class="drive-step"><div class="drive-icon">3&#xFE0F;&#x20E3;</div><div class="drive-text"><strong>Day 4: Oakhurst &harr; Yosemite</strong><span>Hwy 41 N to South Entrance &middot; 16 mi / ~30 min each way</span></div></div>
+      <div class="drive-step"><div class="drive-icon">4&#xFE0F;&#x20E3;</div><div class="drive-text"><strong>Day 5: Oakhurst &rarr; Anaheim</strong><span>Hwy 41 S &rarr; 99 S &rarr; I-5 S &middot; ~4.5 hrs (280 mi)<br>Lunch: Fresno</span></div></div>
+      <div class="drive-step"><div class="drive-icon">5&#xFE0F;&#x20E3;</div><div class="drive-text"><strong>Day 10: Anaheim &rarr; LAX</strong><span>I-5 N &rarr; I-105 W &rarr; LAX &middot; ~45 min (35 mi)<br>Budget: 5251 W 98th St</span></div></div>
+    </div>
+  </div>
+
+  <!-- YOSEMITE MAP -->
+  <div id="mv-yosemite" class="map-view">
+    <div class="map-wrap">
+      <div class="map-loading">Loading Yosemite roads and stops...</div>
+      <div id="map-yosemite" class="trip-map" aria-label="Interactive map of Yosemite day stops"></div>
+      <div class="map-note"><div class="map-note-title">Yosemite day plan</div><div class="map-note-body">South Entrance, Tunnel View, valley stops, Glacier Point, and Mariposa Grove are all pinned.</div></div>
+    </div>
+    <div class="drive-info"><h3>&#x1F3D4;&#xFE0F; Yosemite Day Plan (Day 4)</h3>
+      <div class="drive-step"><div class="drive-icon">&#x1F305;</div><div class="drive-text"><strong>Early AM: Oakhurst &rarr; South Entrance</strong><span>Hwy 41 N &middot; 16 mi / ~30 min &middot; Grab Judy's Donuts (5 AM!)</span></div></div>
+      <div class="drive-step"><div class="drive-icon">&#x1F4F7;</div><div class="drive-text"><strong>First: Tunnel View</strong><span>The iconic panoramic viewpoint</span></div></div>
+      <div class="drive-step"><div class="drive-icon">&#x1F4A7;</div><div class="drive-text"><strong>Then: Bridalveil Fall &rarr; El Capitan Meadow</strong><span>0.5 mi walk to falls, then meadow views</span></div></div>
+      <div class="drive-step"><div class="drive-icon">&#x1F37D;</div><div class="drive-text"><strong>Midday: Yosemite Village</strong><span>Visitor center, lunch</span></div></div>
+      <div class="drive-step"><div class="drive-icon">&#x1F6B6;</div><div class="drive-text"><strong>PM: Mirror Lake &rarr; Yosemite Falls</strong><span>2-mi loop, then tallest waterfall in N. America</span></div></div>
+      <div class="drive-step"><div class="drive-icon">&#x1F30C;</div><div class="drive-text"><strong>Late PM: Glacier Point (if road open)</strong><span>Best view! Call (209) 372-0200</span></div></div>
+      <div class="drive-step"><div class="drive-icon">&#x1F332;</div><div class="drive-text"><strong>Return: Mariposa Grove (if time)</strong><span>Giant sequoias near south entrance</span></div></div>
+    </div>
+  </div>
+
+  <!-- DISNEY MAP -->
+  <div id="mv-disney" class="map-view">
+    <div class="map-wrap">
+      <div class="map-loading">Loading Anaheim and Disney-area map...</div>
+      <div id="map-disney" class="trip-map" aria-label="Interactive map of Disneyland and Anaheim stops"></div>
+      <div class="map-note"><div class="map-note-title">Disney and Anaheim</div><div class="map-note-body">Use the real street grid for hotels, park areas, food stops, and the LAX departure route.</div></div>
+    </div>
+    <div class="drive-info"><h3>&#x1F3F0; Your Disney Days</h3>
+      <div class="drive-step"><div class="drive-icon">&#x1F4C5;</div><div class="drive-text"><strong>Mon 5/12 &mdash; Disneyland (Full Day)</strong><span>Rope drop &rarr; Fantasyland &rarr; Headliners &rarr; Fireworks<br>With AHC Families</span></div></div>
+      <div class="drive-step"><div class="drive-icon">&#x1F3D6;</div><div class="drive-text"><strong>Tue 5/13 &mdash; Free Day</strong><span>Rest, pool, Downtown Disney, Packing House</span></div></div>
+      <div class="drive-step"><div class="drive-icon">&#x1F3A2;</div><div class="drive-text"><strong>Wed 5/14 &mdash; CA Adventure (Evening)</strong><span>Cars Land at sunset &rarr; Pixar Pier &rarr; World of Color</span></div></div>
+      <div class="drive-step"><div class="drive-icon">&#x1F386;</div><div class="drive-text"><strong>Thu 5/15 &mdash; Disneyland (Evening)</strong><span>Arrive 4-5 PM &rarr; Night rides &rarr; Fireworks</span></div></div>
+      <div class="drive-step"><div class="drive-icon">&#x2708;&#xFE0F;</div><div class="drive-text"><strong>Fri 5/16 &mdash; Anaheim &rarr; LAX</strong><span>I-5 N &rarr; I-105 W &middot; ~45 min<br>Budget: 5251 W 98th St</span></div></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- PAGE 3: ITINERARY -->
+<div id="page-itinerary" class="page itinerary-page">
+  <div class="itin-header"><h2>Daily Itinerary</h2><p>Tap each day to explore</p></div>
+  <div class="day-nav" id="day-nav"></div>
+  <div class="day-section" id="day-cards"></div>
+</div>
+
+<!-- PAGE 4: GUIDE -->
+<div id="page-guide" class="page guide-page">
+  <div class="guide-header"><h2>Guides &amp; Tips</h2><p>Disney strategy, restaurants &amp; scenic stops</p></div>
+  <div class="guide-section" id="guide-section"></div>
+  <div class="guide-section">
+    <div class="guide-card open">
+      <div class="guide-card-header"><div class="guide-card-icon">&#x1F4A1;</div><div class="guide-card-title">Smart Adds &amp; Pre-Trip Checks</div></div>
+      <div class="guide-card-body" style="display:block;">
+        <h4>Humboldt / Redwood Add-Ons</h4>
+        <ul>
+          <li><strong>Fern Canyon + Gold Bluffs Beach</strong> &mdash; a bigger Day 2 adventure if everyone wants redwoods plus coast. Expect gravel road, stream crossings, and wet feet. Day-use reservations usually apply May 15&ndash;Sept 15, so your May 8 date is before that window, but still check conditions.</li>
+          <li><strong>Newton B. Drury Scenic Parkway</strong> &mdash; easier redwood wow than a long hike, and pairs well with Prairie Creek if you want a classic old-growth drive.</li>
+          <li><strong>Arcata Marsh</strong> &mdash; low-effort, close to Bayside/Arcata, good for stretching legs, birds, and sunset if the coast is foggy.</li>
+        </ul>
+        <h4>Yosemite Reality Check</h4>
+        <ul>
+          <li><strong>No 2026 entrance reservation is required</strong>, but Yosemite still recommends arriving before 9 AM or after 5 PM to avoid traffic and parking pain.</li>
+          <li><strong>Glacier Point Road and Tioga Road are not guaranteed in early May.</strong> Keep Glacier Point as a bonus; if closed, use Valley View, Cook's Meadow, Lower Yosemite Fall, or Sentinel Bridge instead.</li>
+          <li><strong>Mariposa Grove logistics:</strong> most visitors use the free shuttle from the Welcome Plaza when the road is open. Budget extra time if you try to add it after Yosemite Valley.</li>
+          <li><strong>Water safety matters in May.</strong> Waterfalls are strong, rocks are slick, and rivers run cold and fast.</li>
+        </ul>
+        <h4>Disney / Anaheim Tweaks</h4>
+        <ul>
+          <li><strong>Confirm park reservations and showtimes in the Disneyland app</strong> the night before each park visit. Lightning Lane, entertainment, and dining availability can shift.</li>
+          <li><strong>For World of Color</strong>, check the app early for viewing options and plan to be near Paradise Bay well before showtime.</li>
+          <li><strong>Free day fallback:</strong> Downtown Disney for low-friction food/shopping; Anaheim Packing House if you want a non-Disney meal hall; pool/rest if the park days are running hot.</li>
+        </ul>
+        <h4>Drive-Day Ideas</h4>
+        <ul>
+          <li><strong>Bayside to Oakhurst:</strong> make the first scenic stop early, then protect the afternoon drive. This is the day most likely to feel longer than it looks.</li>
+          <li><strong>Oakhurst to Anaheim:</strong> keep lunch flexible around Fresno or Kettleman City, then push through before Los Angeles traffic thickens.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 5: QUICK REF -->
+<div id="page-ref" class="page ref-page">
+  <div class="ref-header"><h2>Quick Reference</h2></div>
+  <div id="ref-content"></div>
+</div>
+
+<nav class="tab-bar">
+  <button class="active" onclick="showPage('home',this)"><span class="tab-icon">&#x1F3E0;</span>Home</button>
+  <button onclick="showPage('maps',this)"><span class="tab-icon">&#x1F5FA;&#xFE0F;</span>Maps</button>
+  <button onclick="showPage('itinerary',this)"><span class="tab-icon">&#x1F4C5;</span>Days</button>
+  <button onclick="showPage('guide',this)"><span class="tab-icon">&#x2B50;</span>Guide</button>
+  <button onclick="showPage('ref',this)"><span class="tab-icon">&#x1F4CB;</span>Info</button>
+</nav>
+
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<script>
+const DAYS=[{num:1,date:'Wed, May 7',title:"Travel Day & Nat's Birthday",region:'humboldt',events:[{time:'8:09 AM',title:'Board Flight UA 2058',desc:'Kansas City → Denver \xb7 737 MAX 8 \xb7 Seats 27E–28F',highlight:true},{time:'10:50 AM',title:'Board Flight UA 4740',desc:'Denver → Arcata \xb7 ERJ-175 \xb7 Seats 12C–15D \xb7 Arrives ~12 PM',highlight:true},{time:'12:00 PM',title:'Pick Up Rental Car at ACV',desc:'Budget Rent a Car \xb7 Conf: 44911289US3',tag:'Logistics'},{time:'Afternoon',title:'Pick Up Seth from Airport',desc:'Meet Seth at Arcata/Eureka Airport'},{time:'3:00 PM+',title:'Check In at Farm Stay',desc:'1982 Old Arcata Road, Bayside, CA 95524 \xb7 Host: Jeffrey',tag:'Airbnb'},{time:'Evening',title:'Birthday Dinner for Nathaniel! 🎂',desc:'Dinner out with Yip, Lynn, Seth & Jonathan',highlight:true}],tip:"Happy Birthday, Nathaniel! Check restaurant hours ahead — Humboldt spots can close unexpectedly. Top picks: Salt Fish House, Campground, or Cafe Waterfront."},{num:2,date:'Thu, May 8',title:'Exploring Humboldt County',region:'humboldt',events:[{time:'Morning',title:"Breakfast at Yip & Lynn's",desc:'Homemade breakfast with family',highlight:true},{time:'Daytime',title:'Free Time in Humboldt',desc:'Explore the redwoods, Arcata Plaza, Trinidad Head, or relax at the farm'},{time:'Evening',title:"Dinner at Yip & Lynn's",desc:'Family dinner together',highlight:true}],tip:"Drive the Avenue of the Giants for old-growth redwoods. Trinidad Head Trail has stunning ocean views. Moonstone Beach is great for a family stroll!"},{num:3,date:'Fri, May 9',title:'Bayside to Oakhurst',region:'yosemite',events:[{time:'Before 11 AM',title:'Check Out of Farm Stay',desc:'1982 Old Arcata Road, Bayside, CA 95524',tag:'Checkout'},{time:'Daytime',title:'Scenic Drive South (~5.5 hrs)',desc:'Hwy 101 S → 299 E → 99 S → 41 S to Oakhurst (330 mi)',highlight:true},{time:'After 5 PM',title:'Check In at Cottage',desc:'50063 High School Rd, Oakhurst, CA 93644 \xb7 Host: Robert',tag:'Airbnb'}],tip:"Stop at Trinity River for a stretch break. Oakdale is a great lunch stop. If taking Hwy 120, detour to Groveland & Rainbow Pool!"},{num:4,date:'Sat, May 10',title:'Yosemite Day! ⛰️',region:'yosemite',events:[{time:'Early AM',title:'Grab Breakfast To Go',desc:"Judy's Donuts (opens 5 AM) or Bee's Bakery Cafe (opens 7 AM)"},{time:'Morning',title:'Enter Yosemite via South Entrance',desc:'Oakhurst is 16 mi from the park gate — arrive early!',highlight:true},{time:'First Stop',title:'Tunnel View',desc:'Iconic panoramic view: El Capitan, Half Dome & Bridalveil Fall',highlight:true},{time:'Mid-Morning',title:'Bridalveil Fall',desc:'0.5-mile walk to the base of a 620-foot waterfall — expect mist!'},{time:'Late Morning',title:'El Capitan Meadow',desc:'Walk to the meadow for views of El Cap — hike to touch the base!'},{time:'Midday',title:'Yosemite Valley',desc:'Explore Village, visitor center, grab lunch'},{time:'Afternoon',title:'Mirror Lake',desc:'Easy 2-mile loop reflecting Half Dome (seasonal)'},{time:'Afternoon',title:'Yosemite Falls',desc:"North America's tallest waterfall — spectacular in May!",highlight:true},{time:'Late PM',title:'Glacier Point (if open)',desc:'Best panoramic view — call (209) 372-0200 for road status'},{time:'If Time',title:'Mariposa Grove',desc:'Giant sequoia grove near south entrance, on way back'}],tip:"Glacier Point Road typically opens late May/early June. Call (209) 372-0200 for status. Pack layers — temps vary 30+ degrees morning to afternoon.",checklist:['Tunnel View — Iconic panoramic vista','Bridalveil Fall — 620-foot waterfall','El Capitan Meadow — Touch the base','Mirror Lake — Half Dome reflections','Yosemite Falls — Tallest in N. America','Glacier Point — Best panoramic view','Mariposa Grove — Giant sequoias']},{num:5,date:'Sun, May 11',title:'Oakhurst to Anaheim',region:'travel',events:[{time:'Before 10 AM',title:'Check Out of Cottage',desc:'50063 High School Road, Oakhurst, CA 93644',tag:'Checkout'},{time:'Daytime',title:'Drive to Anaheim (~4.5 hrs)',desc:'Hwy 41 S → Hwy 99 S → I-5 S → Anaheim (280 mi)',highlight:true},{time:'Afternoon',title:'Check In at Anaheim',desc:'Begin your 5-night stay near Disneyland!',tag:'Check-in'}],tip:"Plan a lunch stop in Fresno. Groveland & Rainbow Pool are options if you took Hwy 120."},{num:6,date:'Mon, May 12',title:'Disneyland with AHC Families',region:'disney',events:[{time:'Morning',title:'Rope Drop at Disneyland! 🏰',desc:"Arrive 30 min before opening. Fantasyland first: Peter Pan, Alice, Mr. Toad's",highlight:true},{time:'Mid-Morning',title:'Hit the Headliners',desc:'Space Mountain, Rise of the Resistance, Indiana Jones'},{time:'Midday',title:'Lunch Break',desc:'Cafe Orleans (Monte Cristo!) or head to hotel for midday rest'},{time:'Afternoon',title:'Continue with AHC Families',desc:"Pirates, Haunted Mansion, It's a Small World, Big Thunder"},{time:'Evening',title:'Parades & Fireworks',desc:'Paint the Night Parade & Wondrous Journeys — 70th Anniversary!',highlight:true}],tip:"Buy Lightning Lane Multi Pass ($32–40/person) in the app. Book first ride at park entry. Fantasyland strategy: knock out 3–6 rides in the first hour!"},{num:7,date:'Tue, May 13',title:'Free Day in Anaheim',region:'disney',events:[{time:'All Day',title:'Open Schedule',desc:'Rest, Downtown Disney, pool, or Anaheim Packing House',highlight:true}],tip:"Great day for Din Tai Fung (soup dumplings!) at Downtown Disney or Anaheim Packing House."},{num:8,date:'Wed, May 14',title:'California Adventure',region:'disney',events:[{time:'Evening',title:'Disney California Adventure 🎢',desc:'Evening visit to DCA!',highlight:true},{time:'First',title:'Cars Land at Sunset',desc:'Radiator Springs Racers + magical neon lighting at dusk',highlight:true},{time:'Then',title:'Pixar Pier & Rides',desc:'Guardians of the Galaxy, Incredicoaster, Toy Story Mania'},{time:'Night',title:'World of Color — Happiness',desc:'Spectacular water & light show — grab a spot early!',highlight:true}],tip:"Prioritize Cars Land at sunset — the neon lighting is magical! Hit Radiator Springs Racers first. Use Lightning Lane for Guardians & Incredicoaster."},{num:9,date:'Thu, May 15',title:'Disneyland with Family',region:'disney',events:[{time:'4–5 PM',title:'Arrive at Disneyland 🏰',desc:'Late-afternoon entry for lower wait times',highlight:true},{time:'Evening',title:'Dinner in the Park',desc:'Cafe Orleans or quick-service bites'},{time:'Night',title:'Nighttime Magic',desc:'Space Mountain & Haunted Mansion are extra magical at night!'},{time:'Late',title:'Paint the Night & Fireworks',desc:'One last Paint the Night Parade & Wondrous Journeys',highlight:true}],tip:"Arrive by 4–5 PM for lower wait times. Save nighttime classics for after dark — they hit different! Stake out fireworks spot early."},{num:10,date:'Fri, May 16',title:'Departure Day',region:'travel',events:[{time:'Morning',title:'Pack Up & Check Out',desc:'Last morning in Southern California'},{time:'By 12 PM',title:'Drop Off Rental Car at LAX',desc:'Budget \xb7 5251 W 98th St, Los Angeles, CA 90045',tag:'Logistics',highlight:true},{time:'Afternoon',title:'Depart from LAX ✈️',desc:'Safe travels home, Spiegels!',highlight:true}],tip:"Allow extra time for LAX traffic and car return. Budget drop-off: 5251 W 98th St — shuttle to terminal."}];
+
+const GUIDES=[{icon:'🏰',title:'Disney 70th Anniversary',body:'<p>You\'re visiting during the <strong>Disneyland 70th Anniversary Celebration</strong>! Through Summer 2026:</p><ul><li><strong>Paint the Night Parade</strong> — Stunning LED float parade</li><li><strong>Wondrous Journeys Fireworks</strong> — Immersive projection show</li><li><strong>World of Color — Happiness</strong> — Water/light spectacular at DCA</li></ul>'},{icon:'🏃',title:'Rope Drop Strategy (May 12)',body:'<h4>The Plan</h4><p>Early Entry discontinued Jan 2026 — all guests enter at same time.</p><ul><li><strong>Arrive 30 min</strong> before opening (+ parking & security)</li><li><strong>Head to Fantasyland</strong> — short rides, no pre-shows, 3–6 in first hour</li><li><strong>Priority:</strong> Peter Pan, Alice, Mr. Toad\'s, Pinocchio</li><li>Then → <strong>Space Mountain, Rise of the Resistance, Indiana Jones</strong></li><li>Save Pirates, Haunted Mansion, Small World for afternoon</li></ul>'},{icon:'⚡',title:'Lightning Lane Guide',body:'<h4>How It Works</h4><p><strong>Lightning Lane Multi Pass</strong> ($32–40/person/day) — book return times to skip standby.</p><ul><li>Purchase in the <strong>Disneyland app</strong></li><li>Book first ride when you enter</li><li>After redeem (or 2 hrs), book next</li><li>Stack bookings all day</li></ul><h4>Top Picks — Disneyland</h4><p>Space Mountain, Indiana Jones, Big Thunder, Matterhorn, Buzz Lightyear</p><h4>Top Picks — DCA</h4><p>Guardians, Radiator Springs Racers, Toy Story Mania, Incredicoaster</p>'},{icon:'🎢',title:'Must-Do Rides',body:'<h4>Disneyland Park</h4><div class="ride-list"><div class="ride-item"><span class="ride-star">★</span><div><div class="ride-name">Rise of the Resistance</div><div class="ride-desc">Immersive Star Wars — expect long waits</div></div></div><div class="ride-item"><span class="ride-star">★</span><div><div class="ride-name">Space Mountain</div><div class="ride-desc">Classic coaster, thrilling in the dark</div></div></div><div class="ride-item"><span class="ride-star">★</span><div><div class="ride-name">Indiana Jones Adventure</div><div class="ride-desc">Action-packed jeep ride</div></div></div><div class="ride-item"><span class="ride-star">★</span><div><div class="ride-name">Pirates of the Caribbean</div><div class="ride-desc">The original!</div></div></div><div class="ride-item"><span class="ride-star">★</span><div><div class="ride-name">Haunted Mansion</div><div class="ride-desc">Timeless dark ride</div></div></div><div class="ride-item"><span class="ride-star">★</span><div><div class="ride-name">Big Thunder Mountain</div><div class="ride-desc">Fun family coaster</div></div></div><div class="ride-item"><span class="ride-star">★</span><div><div class="ride-name">Matterhorn Bobsleds</div><div class="ride-desc">Disneyland exclusive!</div></div></div></div><h4>California Adventure</h4><div class="ride-list"><div class="ride-item"><span class="ride-star">★</span><div><div class="ride-name">Radiator Springs Racers</div><div class="ride-desc">One of the best rides anywhere</div></div></div><div class="ride-item"><span class="ride-star">★</span><div><div class="ride-name">Guardians: BREAKOUT!</div><div class="ride-desc">Thrilling drop tower</div></div></div><div class="ride-item"><span class="ride-star">★</span><div><div class="ride-name">Incredicoaster</div><div class="ride-desc">High-speed launch coaster</div></div></div><div class="ride-item"><span class="ride-star">★</span><div><div class="ride-name">Web Slingers: Spider-Man</div><div class="ride-desc">Interactive screen ride</div></div></div><div class="ride-item"><span class="ride-star">★</span><div><div class="ride-name">Soarin\' Around the World</div><div class="ride-desc">Hang-gliding simulator</div></div></div><div class="ride-item"><span class="ride-star">★</span><div><div class="ride-name">World of Color</div><div class="ride-desc">Spectacular nighttime show</div></div></div></div>'},{icon:'🍽️',title:'Restaurant Guide',body:'<h4>Humboldt County (Days 1–2)</h4><div class="restaurant-section"><div class="restaurant-item"><div class="restaurant-name">Salt Fish House <span class="restaurant-price">$$$</span></div><div class="restaurant-desc">Fresh seafood, great for celebrations</div></div><div class="restaurant-item"><div class="restaurant-name">Campground <span class="restaurant-price">$$$</span></div><div class="restaurant-desc">Wood-fired steaks & craft cocktails</div></div><div class="restaurant-item"><div class="restaurant-name">Cafe Waterfront <span class="restaurant-price">$$</span></div><div class="restaurant-desc">Humboldt Bay views</div></div><div class="restaurant-item"><div class="restaurant-name">Renata\'s Creperie <span class="restaurant-price">$</span></div><div class="restaurant-desc">Crepes on Arcata Plaza</div></div><div class="restaurant-item"><div class="restaurant-name">Moonstone Grill <span class="restaurant-price">$$$</span></div><div class="restaurant-desc">Ocean-view, stunning sunsets</div></div></div><h4>Oakhurst / Yosemite (Days 3–4)</h4><div class="restaurant-section"><div class="restaurant-item"><div class="restaurant-name">Judy\'s Donuts <span class="restaurant-price">$</span></div><div class="restaurant-desc">Opens 5 AM</div></div><div class="restaurant-item"><div class="restaurant-name">Bee\'s Bakery <span class="restaurant-price">$</span></div><div class="restaurant-desc">Pastries, opens 7 AM</div></div><div class="restaurant-item"><div class="restaurant-name">The Elderberry House <span class="restaurant-price">$$$$</span></div><div class="restaurant-desc">Premier fine dining</div></div><div class="restaurant-item"><div class="restaurant-name">SouthGate Brewing <span class="restaurant-price">$$</span></div><div class="restaurant-desc">Craft beer, family-friendly</div></div></div><h4>Anaheim / Disney (Days 5–10)</h4><div class="restaurant-section"><div class="restaurant-item"><div class="restaurant-name">Cafe Orleans <span class="restaurant-price">$$$</span></div><div class="restaurant-desc">Famous Monte Cristo sandwich</div></div><div class="restaurant-item"><div class="restaurant-name">Din Tai Fung <span class="restaurant-price">$$$</span></div><div class="restaurant-desc">World-famous soup dumplings</div></div><div class="restaurant-item"><div class="restaurant-name">Lamplight Lounge <span class="restaurant-price">$$$</span></div><div class="restaurant-desc">Cocktails at Pixar Pier</div></div><div class="restaurant-item"><div class="restaurant-name">Anaheim Packing House <span class="restaurant-price">$$</span></div><div class="restaurant-desc">Gourmet food hall</div></div><div class="restaurant-item"><div class="restaurant-name">Mama Cozza\'s <span class="restaurant-price">$$</span></div><div class="restaurant-desc">Family Italian since 1965</div></div><div class="restaurant-item"><div class="restaurant-name">Goofy\'s Kitchen <span class="restaurant-price">$$$</span></div><div class="restaurant-desc">Character dining buffet</div></div></div>'},{icon:'🏞️',title:'Scenic Stops Along the Way',body:'<h4>Humboldt (Days 1–2)</h4><ul><li><strong>Avenue of the Giants</strong> — Old-growth redwoods</li><li><strong>Trinidad Head Trail</strong> — Coastal trail, Pacific views</li><li><strong>Arcata Plaza</strong> — Shops, cafes</li><li><strong>Moonstone Beach</strong> — Sea stacks, family stroll</li></ul><h4>Bayside to Oakhurst (Day 3)</h4><ul><li><strong>Trinity River</strong> — Scenic stop on Hwy 299</li><li><strong>Oakdale</strong> — Lunch stop</li><li><strong>Groveland</strong> — Gold-rush town</li><li><strong>Rainbow Pool</strong> — Swimming hole & waterfall</li></ul><h4>Yosemite (Day 4)</h4><ul><li><strong>Tunnel View</strong> — THE iconic panorama</li><li><strong>Bridalveil Fall</strong> — 620-ft waterfall</li><li><strong>El Capitan Meadow</strong> — 3,000-ft granite face</li><li><strong>Mirror Lake</strong> — Half Dome reflections</li><li><strong>Yosemite Falls</strong> — 2,425 ft, peak May</li><li><strong>Glacier Point</strong> — Best view if road open</li><li><strong>Mariposa Grove</strong> — 500+ giant sequoias</li></ul>'},{icon:'📱',title:'Packing & Logistics Tips',body:'<ul><li><strong>Disneyland App</strong> — Lightning Lane, mobile ordering, wait times</li><li><strong>Portable Chargers</strong> — At least one backup per person</li><li><strong>Comfortable Shoes</strong> — 8–12 miles per park day!</li><li><strong>Layers for Yosemite</strong> — Temps vary 30+ degrees</li><li><strong>Hydrate!</strong> — Disney gives free ice water</li><li><strong>Midday Breaks</strong> — Hotel 12–3 PM when crowds peak</li><li><strong>Sunscreen & Hats</strong> — Anaheim avg 75–80°F</li><li><strong>Pack Snacks</strong> — For Yosemite & drives</li></ul>'}];
+
+const MAP_STYLE='https://tiles.openfreemap.org/styles/liberty';
+const MAP_CONFIG={
+  overview:{center:[-121.55,37.45],zoom:5.2,bounds:[[-124.45,33.6],[-117.45,41.15]],route:[[-124.109,40.978],[-124.056,40.842],[-123.128,40.794],[-120.847,37.766],[-119.966,37.838],[-119.649,37.328],[-119.538,37.865],[-117.919,33.812],[-118.378,33.946]]},
+  yosemite:{center:[-119.62,37.68],zoom:9.1,bounds:[[-119.82,37.28],[-119.42,37.9]],route:[[-119.649,37.328],[-119.641,37.506],[-119.677,37.715],[-119.65,37.716],[-119.633,37.731],[-119.596,37.748],[-119.558,37.745],[-119.596,37.756],[-119.573,37.727],[-119.602,37.514],[-119.649,37.328]]},
+  disney:{center:[-117.921,33.813],zoom:13.6,bounds:[[-117.955,33.789],[-117.888,33.838]],route:[[-117.928,33.817],[-117.923,33.81],[-117.919,33.812],[-117.918,33.807],[-117.911,33.831],[-117.914,33.839]]}
+};
+const MAP_MARKERS={
+  overview:[
+    {title:'Arcata/Eureka Airport (ACV)',desc:'Arrive May 7, 12 PM\nPick up Budget rental car\nConf: 44911289US3',coords:[-124.109,40.978],kind:'humboldt',icon:'&#9992;'},
+    {title:'Farm Stay — Bayside',desc:'1982 Old Arcata Road\nMay 7-9 · Host: Jeffrey\nCheck-in after 3 PM',coords:[-124.056,40.842],kind:'humboldt',icon:'&#x1F3E1;'},
+    {title:'Trinidad Head Trail',desc:'Stunning coastal trail 20 min N of Arcata\nPanoramic Pacific views\nMoonstone Beach nearby',coords:[-124.15,41.056],kind:'humboldt',icon:'&#x1F3D6;',small:true},
+    {title:'Trinity River',desc:'Scenic stretch stop on Hwy 299\nBeautiful river access — Day 3',coords:[-123.128,40.794],kind:'travel',icon:'&#x1F30A;',small:true},
+    {title:'Oakdale',desc:'Good lunch stop on Day 3\nCowboy Capital of the World',coords:[-120.847,37.766],kind:'travel',icon:'&#x1F374;',small:true},
+    {title:'Groveland',desc:'Charming gold-rush town\nCoffee and meal stop\nGateway to Yosemite via Hwy 120',coords:[-120.211,37.838],kind:'yosemite',icon:'&#9749;',small:true},
+    {title:'Cottage — Oakhurst',desc:'50063 High School Road\nMay 9-11 · Host: Robert\nGateway to Yosemite (16 mi)',coords:[-119.649,37.328],kind:'yosemite',icon:'&#x1F3D5;'},
+    {title:'Yosemite National Park',desc:'Day 4 — Full exploration!\nTunnel View, El Capitan, Yosemite Falls\nMirror Lake, Glacier Point, Mariposa Grove',coords:[-119.538,37.865],kind:'yosemite',icon:'&#x1F3D4;'},
+    {title:'Disneyland Resort — Anaheim',desc:'Days 6-9 · Happiest Place on Earth!\nDisneyland + California Adventure\n70th Anniversary Celebration!',coords:[-117.919,33.812],kind:'disney',icon:'&#x1F3F0;'},
+    {title:'LAX Airport',desc:'Drop off rental car May 16 by 12 PM\nBudget: 5251 W 98th St\nFly home!',coords:[-118.378,33.946],kind:'travel',icon:'&#9992;'}
+  ],
+  yosemite:[
+    {title:'Your Cottage — Oakhurst',desc:'50063 High School Road\nHost: Robert · May 9-11\n16 mi from south entrance',coords:[-119.649,37.328],kind:'yosemite',icon:'&#x1F3E0;'},
+    {title:'South Entrance (Hwy 41)',desc:'Your primary entry from Oakhurst\n16 miles from cottage\nArrive early to beat crowds!',coords:[-119.641,37.506],kind:'travel',icon:'&#x1F6AA;',small:true},
+    {title:'Mariposa Grove',desc:'500+ giant sequoias!\n1,800-yr-old Grizzly Giant\nNear south entrance, visit on way back',coords:[-119.602,37.514],kind:'humboldt',icon:'&#x1F332;'},
+    {title:'Tunnel View',desc:'THE iconic Yosemite panorama!\nEl Capitan + Half Dome + Bridalveil Fall\nFirst stop on your route in',coords:[-119.677,37.715],kind:'yosemite',icon:'&#x1F4F7;'},
+    {title:'Bridalveil Fall',desc:'620-foot waterfall\n0.5-mile walk to the base\nExpect mist in May!',coords:[-119.65,37.716],kind:'travel',icon:'&#x1F4A7;',small:true},
+    {title:'El Capitan Meadow',desc:'3,000-foot granite face!\nWalk across meadow to touch the base',coords:[-119.633,37.731],kind:'yosemite',icon:'&#x1F9D7;'},
+    {title:'Yosemite Village',desc:'Visitor center, gift shop, lunch',coords:[-119.596,37.748],kind:'travel',icon:'&#x1F3E0;',small:true},
+    {title:'Mirror Lake',desc:'Easy 2-mile loop trail\nReflections of Half Dome!\nShould have water in May',coords:[-119.558,37.745],kind:'travel',icon:'&#x1F4A7;'},
+    {title:'Yosemite Falls',desc:"North America's tallest waterfall!\n2,425 feet · Peak flow in May",coords:[-119.596,37.756],kind:'travel',icon:'&#x1F4A7;'},
+    {title:'Half Dome',desc:"Yosemite's most iconic rock\nBest from Mirror Lake and Glacier Point",coords:[-119.533,37.746],kind:'yosemite',icon:'&#x26F0;',small:true},
+    {title:'Glacier Point',desc:'THE best panoramic view!\nHalf Dome, Nevada Fall, High Sierra\nCall (209) 372-0200 for road status',coords:[-119.573,37.727],kind:'yosemite',icon:'&#x1F30C;'}
+  ],
+  disney:[
+    {title:'Your Anaheim Stay',desc:'May 11-16 · 5 nights\nSee separate confirmation',coords:[-117.928,33.817],kind:'humboldt',icon:'&#x1F3E8;'},
+    {title:'Disneyland Park',desc:'Mon 5/12 full day and Thu 5/15 evening\nFantasyland rope drop, headliners, fireworks',coords:[-117.919,33.812],kind:'disney',icon:'&#x1F3F0;'},
+    {title:'Fantasyland',desc:'ROPE DROP HERE FIRST!\nPeter Pan, Alice in Wonderland\nMr. Toad, Matterhorn',coords:[-117.918,33.814],kind:'disney',icon:'&#x1F478;',small:true},
+    {title:"Star Wars: Galaxy's Edge",desc:'Rise of the Resistance — MUST DO!\nExpect long waits\nImmersive Star Wars world',coords:[-117.923,33.815],kind:'disney',icon:'&#x2B50;',small:true},
+    {title:'Disney California Adventure',desc:'Wed 5/14 evening\nCars Land at sunset, Pixar Pier, World of Color',coords:[-117.918,33.807],kind:'disney',icon:'&#x1F3A2;'},
+    {title:'Cars Land',desc:'Radiator Springs Racers — best ride!\nMagical neon at sunset\nHit FIRST on DCA evening',coords:[-117.916,33.805],kind:'travel',icon:'&#x1F697;',small:true},
+    {title:'Pixar Pier',desc:'Incredicoaster, Toy Story Midway Mania\nWorld of Color nearby',coords:[-117.922,33.805],kind:'travel',icon:'&#x1F3A1;',small:true},
+    {title:'Downtown Disney',desc:'Shopping and restaurants\nGood free-day option',coords:[-117.923,33.81],kind:'yosemite',icon:'&#x1F6CD;',small:true},
+    {title:'Din Tai Fung',desc:'Downtown Disney\nWorld-famous soup dumplings!',coords:[-117.924,33.81],kind:'yosemite',icon:'&#x1F962;',small:true},
+    {title:'Anaheim Packing House',desc:'Gourmet food hall, 1919 building\nTons of options\n~2 miles from Disney',coords:[-117.911,33.831],kind:'yosemite',icon:'&#x1F959;'},
+    {title:"Mama Cozza's",desc:'Family Italian since 1965\nHomemade sauces\n~2 miles from Disney',coords:[-117.914,33.839],kind:'yosemite',icon:'&#x1F355;',small:true}
+  ]
+};
+const tripMaps={};
+
+function tabButtonFor(id){return [...document.querySelectorAll('.tab-bar button')].find(b=>b.getAttribute('onclick')?.includes(`'${id}'`));}
+function showPage(id,btn){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('page-'+id).classList.add('active');document.querySelectorAll('.tab-bar button').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');window.scrollTo(0,0);if(id==='maps')initTripMaps();}
+function hideTooltip(){}
+function switchMap(w,btn){document.querySelectorAll('.map-btn').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');document.querySelectorAll('.map-view').forEach(v=>v.classList.remove('active'));document.getElementById('mv-'+w).classList.add('active');initTripMaps(w);}
+function popupHtml(marker){return `<div class="map-popup-title">${marker.title}</div><div class="map-popup-desc">${marker.desc.replace(/\n/g,'<br>')}</div>`;}
+function addRoute(map,key){const cfg=MAP_CONFIG[key];map.addSource(`${key}-route`,{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:cfg.route},properties:{}}});map.addLayer({id:`${key}-route-casing`,type:'line',source:`${key}-route`,layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#fff','line-width':7,'line-opacity':0.9}});map.addLayer({id:`${key}-route`,type:'line',source:`${key}-route`,layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#d4a017','line-width':4,'line-opacity':0.92,'line-dasharray':[1.2,1]}});}
+function addMarkers(map,key){MAP_MARKERS[key].forEach(marker=>{const el=document.createElement('button');el.type='button';el.className=`map-marker ${marker.kind}${marker.small?' small':''}`;el.innerHTML=marker.icon;el.setAttribute('aria-label',marker.title);new maplibregl.Marker({element:el,anchor:'center'}).setLngLat(marker.coords).setPopup(new maplibregl.Popup({offset:18,closeButton:true}).setHTML(popupHtml(marker))).addTo(map);});}
+function createTripMap(key){if(tripMaps[key]||typeof maplibregl==='undefined')return;const cfg=MAP_CONFIG[key];const map=new maplibregl.Map({container:`map-${key}`,style:MAP_STYLE,center:cfg.center,zoom:cfg.zoom,attributionControl:false});tripMaps[key]=map;map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');map.addControl(new maplibregl.AttributionControl({compact:true}),'bottom-right');map.on('load',()=>{addRoute(map,key);addMarkers(map,key);document.getElementById(`map-${key}`).closest('.map-wrap').classList.add('ready');map.fitBounds(cfg.bounds,{padding:42,duration:0});});map.on('error',()=>{const wrap=document.getElementById(`map-${key}`).closest('.map-wrap');const loading=wrap.querySelector('.map-loading');if(loading)loading.textContent='Map tiles could not load. Check the internet connection and try again.';});}
+function initTripMaps(preferred='overview'){createTripMap(preferred);setTimeout(()=>{Object.values(tripMaps).forEach(map=>map.resize());},80);}
+
+function buildHomeTimeline(){const c=document.getElementById('home-timeline');const co={humboldt:'var(--humboldt)',yosemite:'var(--yosemite)',disney:'var(--disney)',travel:'var(--travel)'};const ic={humboldt:'🌲',yosemite:'⛰️',disney:'🏰',travel:'🚗'};c.innerHTML=DAYS.map((d,i)=>`<button class="home-day-link" onclick="openDayFromHome(${i})" aria-label="Open day ${d.num}: ${d.title}"><div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);"><div style="width:36px;height:36px;border-radius:10px;background:${co[d.region]};color:white;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:700;font-size:15px;flex-shrink:0;">${d.num}</div><div style="flex:1;"><div style="font-size:11px;color:var(--text-muted);font-weight:500;">${d.date}</div><div style="font-size:14px;font-weight:600;">${d.title}</div></div><div style="font-size:22px;">${ic[d.region]}</div></div></button>`).join('');}
+
+function buildItinerary(){const nav=document.getElementById('day-nav'),cards=document.getElementById('day-cards');nav.innerHTML=DAYS.map((d,i)=>`<button class="day-chip${i===0?' active':''}" data-region="${d.region}" onclick="scrollToDay(${i})">${d.num}</button>`).join('');cards.innerHTML=DAYS.map((d,i)=>{let ev='<div class="timeline">'+d.events.map(e=>`<div class="tl-item${e.highlight?' highlight':''}"><div class="tl-dot"></div><div class="tl-time">${e.time}</div><div class="tl-title">${e.title}</div><div class="tl-desc">${e.desc}</div>${e.tag?`<span class="tl-tag">${e.tag}</span>`:''}</div>`).join('')+'</div>';if(d.tip)ev+=`<div class="tip-box"><strong>★ TIP:</strong> ${d.tip}</div>`;if(d.checklist)ev+='<div class="checklist">'+d.checklist.map(c=>`<div class="checklist-item" onclick="toggleCheck(this)"><div class="check-box"></div><span class="check-label">${c}</span></div>`).join('')+'</div>';const rl=d.region==='disney'?'Anaheim / Disney':d.region==='travel'?'Travel Day':d.region[0].toUpperCase()+d.region.slice(1);return`<div class="day-card${i===0?' open':''}" id="day-${i}"><div class="day-card-header" onclick="toggleDay(${i})"><div class="day-num ${d.region}">${d.num}</div><div class="day-info"><div class="day-date">${d.date}</div><div class="day-title">${d.title}</div><span class="day-region-tag ${d.region}">${rl}</span></div><div class="day-chevron">▼</div></div><div class="day-body">${ev}</div></div>`;}).join('');}
+function toggleDay(i){document.getElementById('day-'+i).classList.toggle('open');}
+function scrollToDay(i){document.querySelectorAll('.day-chip').forEach((c,ci)=>c.classList.toggle('active',ci===i));const card=document.getElementById('day-'+i);if(!card.classList.contains('open'))card.classList.add('open');const nav=document.getElementById('day-nav');const top=card.getBoundingClientRect().top+window.scrollY-(nav?.offsetHeight||0)-8;window.scrollTo({top,behavior:'smooth'});}
+function openDayFromHome(i){showPage('itinerary',tabButtonFor('itinerary'));requestAnimationFrame(()=>scrollToDay(i));}
+function toggleCheck(el){el.classList.toggle('checked');el.querySelector('.check-box').innerHTML=el.classList.contains('checked')?'✓':'';}
+
+function buildGuides(){document.getElementById('guide-section').innerHTML=GUIDES.map((g,i)=>`<div class="guide-card${i===0?' open':''}" id="guide-${i}"><div class="guide-card-header" onclick="toggleGuide(${i})"><div class="guide-card-icon">${g.icon}</div><div class="guide-card-title">${g.title}</div><div class="guide-card-chevron">▼</div></div><div class="guide-card-body">${g.body}</div></div>`).join('');}
+function toggleGuide(i){document.getElementById('guide-'+i).classList.toggle('open');}
+
+function isIOS(){return /iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);}
+function openSmartLink(appUrl,webUrl){if(isIOS()&&appUrl){window.location.href=appUrl;setTimeout(()=>{window.location.href=webUrl;},900);return;}window.open(webUrl,'_blank','noopener');}
+function openAppleMaps(address){window.location.href=`https://maps.apple.com/?q=${encodeURIComponent(address)}`;}
+function confirmCall(number,label){if(confirm(`Call ${label} at ${number}?`))window.location.href=`tel:${number.replace(/[^+0-9]/g,'')}`;}
+
+function buildRefPage(){document.getElementById('ref-content').innerHTML=`
+<div class="ref-section-title">Confirmation Numbers</div>
+<div class="ref-table">
+<a class="ref-row link-row" href="https://www.united.com/en/us/manageres/mytrips" onclick="event.preventDefault();openSmartLink('united://','https://www.united.com/en/us/manageres/mytrips')"><div class="ref-row-icon">✈️</div><div class="ref-row-content"><div class="ref-row-label">United Airlines — May 7</div><div class="ref-row-value">UA 2058 / UA 4740</div><div class="ref-row-sub">MCI → DEN → ACV</div><div class="ref-action">Open United trip lookup</div></div></a>
+<a class="ref-row link-row" href="https://www.budget.com/en/reservation/view" onclick="event.preventDefault();openSmartLink('budget://','https://www.budget.com/en/reservation/view')"><div class="ref-row-icon">🚗</div><div class="ref-row-content"><div class="ref-row-label">Budget Rental Car</div><div class="ref-row-value">ACV → LAX</div><div class="ref-row-mono">44911289US3</div><div class="ref-row-sub">Priceline: 327-294-243-95</div><div class="ref-action">Open Budget reservation lookup</div></div></a>
+<a class="ref-row link-row" href="https://www.airbnb.com/trips" onclick="event.preventDefault();openSmartLink('airbnb://trips','https://www.airbnb.com/trips')"><div class="ref-row-icon">🏡</div><div class="ref-row-content"><div class="ref-row-label">Airbnb #1 — Farm Stay, Bayside</div><div class="ref-row-value">May 7–9 \xb7 Host: Jeffrey</div><div class="ref-row-sub">1982 Old Arcata Road, Bayside, CA 95524</div><div class="ref-action">Open Airbnb trips</div></div></a>
+<a class="ref-row link-row" href="https://www.airbnb.com/trips" onclick="event.preventDefault();openSmartLink('airbnb://trips','https://www.airbnb.com/trips')"><div class="ref-row-icon">🏕️</div><div class="ref-row-content"><div class="ref-row-label">Airbnb #2 — Cottage, Oakhurst</div><div class="ref-row-value">May 9–11 \xb7 Host: Robert</div><div class="ref-row-sub">50063 High School Road, Oakhurst, CA 93644</div><div class="ref-action">Open Airbnb trips</div></div></a>
+<a class="ref-row link-row" href="https://disneyland.disney.go.com/" onclick="event.preventDefault();openSmartLink('disneyland://','https://disneyland.disney.go.com/')"><div class="ref-row-icon">🏰</div><div class="ref-row-content"><div class="ref-row-label">Anaheim Stay / Disney</div><div class="ref-row-value">May 11–16 \xb7 5 nights</div><div class="ref-row-sub">See separate confirmation</div><div class="ref-action">Open Disneyland planning</div></div></a>
+</div>
+<div class="ref-section-title">Key Addresses</div>
+<div class="ref-table">
+<a class="ref-row link-row" href="https://maps.apple.com/?q=3561%20Boeing%20Ave%2C%20McKinleyville%2C%20CA%2095519" onclick="event.preventDefault();openAppleMaps('3561 Boeing Ave, McKinleyville, CA 95519')"><div class="ref-row-icon">📍</div><div class="ref-row-content"><div class="ref-row-label">Budget ACV Pick-up</div><div class="ref-row-value">3561 Boeing Ave, McKinleyville, CA 95519</div><div class="ref-action">Open in Apple Maps</div></div></a>
+<a class="ref-row link-row" href="https://maps.apple.com/?q=5251%20W%2098th%20St%2C%20Los%20Angeles%2C%20CA%2090045" onclick="event.preventDefault();openAppleMaps('5251 W 98th St, Los Angeles, CA 90045')"><div class="ref-row-icon">📍</div><div class="ref-row-content"><div class="ref-row-label">Budget LAX Drop-off</div><div class="ref-row-value">5251 W 98th St, Los Angeles, CA 90045</div><div class="ref-action">Open in Apple Maps</div></div></a>
+<a class="ref-row link-row" href="https://maps.apple.com/?q=1982%20Old%20Arcata%20Road%2C%20Bayside%2C%20CA%2095524" onclick="event.preventDefault();openAppleMaps('1982 Old Arcata Road, Bayside, CA 95524')"><div class="ref-row-icon">📍</div><div class="ref-row-content"><div class="ref-row-label">Bayside Farm Stay</div><div class="ref-row-value">1982 Old Arcata Road, Bayside, CA 95524</div><div class="ref-action">Open in Apple Maps</div></div></a>
+<a class="ref-row link-row" href="https://maps.apple.com/?q=50063%20High%20School%20Road%2C%20Oakhurst%2C%20CA%2093644" onclick="event.preventDefault();openAppleMaps('50063 High School Road, Oakhurst, CA 93644')"><div class="ref-row-icon">📍</div><div class="ref-row-content"><div class="ref-row-label">Oakhurst Cottage</div><div class="ref-row-value">50063 High School Road, Oakhurst, CA 93644</div><div class="ref-action">Open in Apple Maps</div></div></a>
+</div>
+<div class="ref-section-title">Emergency & Support</div>
+<div class="ref-table">
+<a class="ref-row link-row" href="tel:+18666717282" onclick="event.preventDefault();confirmCall('+1 (866) 671-7282','Budget Rent a Car')"><div class="ref-row-icon">📞</div><div class="ref-row-content"><div class="ref-row-label">Budget Rent a Car</div><div class="phone-link">+1 (866) 671-7282</div><div class="ref-action">Tap to call</div></div></a>
+<a class="ref-row link-row" href="tel:+18008648331" onclick="event.preventDefault();confirmCall('+1 (800) 864-8331','United Airlines')"><div class="ref-row-icon">📞</div><div class="ref-row-content"><div class="ref-row-label">United Airlines</div><div class="phone-link">+1 (800) 864-8331</div><div class="ref-action">Tap to call</div></div></a>
+<a class="ref-row link-row" href="tel:+18442342500" onclick="event.preventDefault();confirmCall('+1 (844) 234-2500','Airbnb Support')"><div class="ref-row-icon">📞</div><div class="ref-row-content"><div class="ref-row-label">Airbnb Support</div><div class="phone-link">+1 (844) 234-2500</div><div class="ref-action">Tap to call</div></div></a>
+<a class="ref-row link-row" href="tel:+18774775807" onclick="event.preventDefault();confirmCall('+1 (877) 477-5807','Priceline Support')"><div class="ref-row-icon">📞</div><div class="ref-row-content"><div class="ref-row-label">Priceline Support</div><div class="phone-link">+1 (877) 477-5807</div><div class="ref-action">Tap to call</div></div></a>
+<a class="ref-row link-row" href="tel:+12093720200" onclick="event.preventDefault();confirmCall('(209) 372-0200','Yosemite Road Info')"><div class="ref-row-icon">📞</div><div class="ref-row-content"><div class="ref-row-label">Yosemite Road Info</div><div class="phone-link">(209) 372-0200</div><div class="ref-action">Tap to call</div></div></a>
+<a class="ref-row link-row" href="tel:+17147814636" onclick="event.preventDefault();confirmCall('(714) 781-4636','Disneyland Info')"><div class="ref-row-icon">📞</div><div class="ref-row-content"><div class="ref-row-label">Disneyland Info</div><div class="phone-link">(714) 781-4636</div><div class="ref-action">Tap to call</div></div></a>
+</div>`;}
+
+buildHomeTimeline();buildItinerary();buildGuides();buildRefPage();
+const launchPage=location.hash.replace('#','');
+if(['maps','itinerary','guide','ref'].includes(launchPage))showPage(launchPage,tabButtonFor(launchPage));
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+</script>
+</body>
+</html>

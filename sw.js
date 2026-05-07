@@ -1,11 +1,13 @@
-const CACHE_NAME = 'ca-trip-v5';
+const CACHE_NAME = 'ca-trip-v7';
 const urlsToCache = [
   './',
   './index.html',
   './manifest.json',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
-  './assets/icons/apple-touch-icon.png'
+  './assets/icons/apple-touch-icon.png',
+  './assets/vendor/leaflet/leaflet.css',
+  './assets/vendor/leaflet/leaflet.js'
 ];
 
 self.addEventListener('install', event => {

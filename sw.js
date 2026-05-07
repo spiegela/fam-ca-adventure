@@ -1,14 +1,11 @@
-const CACHE_NAME = 'ca-trip-v3';
+const CACHE_NAME = 'ca-trip-v5';
 const urlsToCache = [
   './',
   './index.html',
   './manifest.json',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
-  './assets/icons/apple-touch-icon.png',
-  'https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css',
-  'https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js',
-  'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400&display=swap'
+  './assets/icons/apple-touch-icon.png'
 ];
 
 self.addEventListener('install', event => {
@@ -28,6 +25,25 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') return;
+  const requestUrl = new URL(event.request.url);
+
+  if (event.request.mode === 'navigate' || event.request.destination === 'document') {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' }).then(response => {
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put('./index.html', responseClone));
+        return response;
+      }).catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+
+  if (requestUrl.origin !== self.location.origin) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then(response => {
       if (response) return response;
@@ -39,11 +55,6 @@ self.addEventListener('fetch', event => {
           });
         }
         return fetchResponse;
-      }).catch(() => {
-        // Offline fallback
-        if (event.request.destination === 'document') {
-          return caches.match('./index.html');
-        }
       });
     })
   );
